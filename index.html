@@ -1,0 +1,219 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Monitoramento Ambiental</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+            background: #101827;
+            color: white;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .subtitulo {
+            text-align: center;
+            color: #94a3b8;
+            margin-bottom: 35px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .card {
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .card h2 {
+            font-size: 17px;
+            color: #94a3b8;
+            font-weight: normal;
+        }
+
+        .valor {
+            font-size: 27px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .chuva {
+            color: #38bdf8;
+        }
+
+        .seco {
+            color: #4ade80;
+        }
+
+        .alerta {
+            color: #f87171;
+        }
+
+        .normal {
+            color: #4ade80;
+        }
+
+        .conexao {
+            text-align: center;
+            margin-top: 25px;
+            color: #94a3b8;
+        }
+
+        .rodape {
+            text-align: center;
+            margin-top: 35px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        @media (max-width: 550px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Monitoramento Ambiental</h1>
+
+    <p class="subtitulo">
+        Sistema de monitoramento em tempo real
+    </p>
+
+    <div class="grid">
+
+        <div class="card">
+            <h2>Sensor de Chuva</h2>
+            <div id="chuva" class="valor">Carregando...</div>
+        </div>
+
+        <div class="card">
+            <h2>Leitura Analógica</h2>
+            <div id="analogico" class="valor">---</div>
+        </div>
+
+        <div class="card">
+            <h2>Distância Ultrassônica</h2>
+            <div id="distancia" class="valor">---</div>
+        </div>
+
+        <div class="card">
+            <h2>Sistema de Alerta</h2>
+            <div id="alerta" class="valor">---</div>
+        </div>
+
+    </div>
+
+    <div class="conexao">
+        Arduino: <span id="conexao">Verificando...</span>
+    </div>
+
+    <div class="rodape">
+        Atualização automática a cada segundo
+    </div>
+
+</div>
+
+<script>
+
+async function atualizarDados() {
+
+    try {
+
+        const resposta = await fetch('/api/status');
+        const dados = await resposta.json();
+
+        const chuva = document.getElementById('chuva');
+        const analogico = document.getElementById('analogico');
+        const distancia = document.getElementById('distancia');
+        const alerta = document.getElementById('alerta');
+        const conexao = document.getElementById('conexao');
+
+        if (!dados.conectado) {
+
+            chuva.innerText = 'SEM CONEXÃO';
+            analogico.innerText = '---';
+            distancia.innerText = '---';
+            alerta.innerText = '---';
+
+            conexao.innerText = 'Desconectado';
+
+            chuva.className = 'valor alerta';
+            return;
+        }
+
+        // Sensor de chuva
+        if (dados.chovendo) {
+            chuva.innerText = 'CHOVENDO';
+            chuva.className = 'valor chuva';
+        } else {
+            chuva.innerText = 'SEM CHUVA';
+            chuva.className = 'valor seco';
+        }
+
+        // Leitura analógica
+        analogico.innerText = dados.analogico;
+
+        // Distância ultrassônica
+        if (dados.distancia < 0) {
+            distancia.innerText = 'Sem leitura';
+        } else {
+            distancia.innerText =
+                dados.distancia.toFixed(2) + ' cm';
+        }
+
+        // Sistema de alerta
+        if (dados.alerta) {
+            alerta.innerText = 'ALERTA ATIVADO';
+            alerta.className = 'valor alerta';
+        } else {
+            alerta.innerText = 'NORMAL';
+            alerta.className = 'valor normal';
+        }
+
+        conexao.innerText = 'Conectado';
+
+    } catch (erro) {
+
+        document.getElementById('conexao').innerText =
+            'Erro de comunicação';
+
+    }
+}
+
+atualizarDados();
+
+setInterval(atualizarDados, 1000);
+
+</script>
+
+</body>
+</html>
